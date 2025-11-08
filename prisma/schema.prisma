@@ -15,5 +15,6 @@ datasource db {
 }
 
 model User {
-  
+  userId String @id @default(uuid())
+
 }
