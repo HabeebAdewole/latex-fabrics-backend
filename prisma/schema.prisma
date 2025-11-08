@@ -15,5 +15,148 @@ datasource db {
 }
 
 model User {
-  
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phoneNumber  String   @unique
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders        Order[]
+  carts         Cart[]
+  favorites     Favorite[]
+  addresses     Address[]
+  refreshTokens RefreshToken[]
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  description   String
+  category      String
+  pricePerYard  Float
+  stockQuantity Int
+  images        String[]
+  colors        String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  orderItems OrderItem[]
+  carts      Cart[]
+  favorites  Favorite[]
+
+  @@index([category, pricePerYard])
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  userId        String
+  orderNumber   String        @unique
+  totalAmount   Float
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(UNPAID)
+  deliveryPhone String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id])
+  orderItems OrderItem[]
+
+  @@index([userId, status])
+  @@index([userId, paymentStatus])
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  productId       String
+  productName     String
+  quantity        Int
+  priceAtPurchase Float
+  subtotal        Float
+  pricePerYard    Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@index([userId, productId])
+}
+
+model RefreshToken {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@index([userId, productId])
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  street    String
+  city      String
+  state     String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELED
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
 }
