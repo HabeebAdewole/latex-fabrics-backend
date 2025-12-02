@@ -2,11 +2,13 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 dotenv.config();
 
-//wrote the logic for password hashing
-//password hash by bcrypt using salt-round
-//validate password length and strength and also check if hashed password= password 
-
-
+/*
+utility class for hashing and comparing passwords using bcrypt
+includes methods for:
+- hashing a plain text password
+- comparing a plain text password with a hashed password
+- validating password strength based on defined criteria
+*/
 export class PasswordUtil {
     private static readonly SALT_ROUNDS =parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10);
 
