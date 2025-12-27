@@ -1,6 +1,9 @@
 import crypto from 'crypto';
+import { getRedisClient } from '../config/redis.config';
 /*
  Generate a One-Time Password (OTP)
+ store it in Redis with an expiration time
+ verify the OTP against user input
  length - Length of the OTP */
 
 
@@ -33,7 +36,36 @@ import crypto from 'crypto';
             attempts: 0, 
         }
     }
-    static verifyOtp(inputOtp: string,){
+    static async storeOtp(email: string, otpData: string,): Promise<string> {
+        const redis = getRedisClient();
+        const key = `otp:${email}`;
+        await redis.setEx(key, this.OTP_EXPIRES_IN_MINUTES * 60, JSON.stringify(otpData));
+        console.log(` OTP stored: ${key} (expires in 600s)`);
 
+        return otpData;
+    }
+    static async verifyOtp( email: string, inputOtp: string, purpose: 'verification' | 'login' ): Promise<{ isValid: boolean; error?: string }> {
+        const redis = getRedisClient();
+        const key = `otp:${purpose}:${email}`;
+        
+        const otpDataString = await redis.get(key);
+        if (!otpDataString) {
+            return { isValid: false, error: 'OTP not found or expired' };
+        }
+        
+        const otpData: OtpData = JSON.parse(otpDataString);
+        
+        if (otpData.attempts >= this.MAX_OTP_ATTEMPTS) {
+            return { isValid: false, error: 'Maximum attempts exceeded' };
+        }
+        
+        if (otpData.otp === inputOtp) {
+            await redis.del(key);
+            return { isValid: true };
+        }
+        
+        otpData.attempts++;
+        await redis.setEx(key, this.OTP_EXPIRES_IN_MINUTES * 60, JSON.stringify(otpData));
+        return { isValid: false, error: 'Invalid OTP' };
     }
  }

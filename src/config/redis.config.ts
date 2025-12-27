@@ -20,7 +20,7 @@ class RedisConfig {
         });
     }
     // Singleton pattern to ensure only one instance of RedisConfig
-    //converted the insatnce from private to public
+    //converted the instance from private to public
     static getInstance(): RedisConfig {
         if (!RedisConfig.instance) {
             RedisConfig.instance = new RedisConfig();
