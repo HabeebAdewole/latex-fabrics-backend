@@ -36,9 +36,9 @@ import { getRedisClient } from '../config/redis.config';
             attempts: 0, 
         }
     }
-    static async storeOtp(email: string, otpData: string,): Promise<string> {
+    static async storeOtp(email: string, otpData: string, purpose: 'verification' | 'login'): Promise<string> {
         const redis = getRedisClient();
-        const key = `otp:${email}`;
+        const key = `otp:${purpose}:${email}`;
         await redis.setEx(key, this.OTP_EXPIRES_IN_MINUTES * 60, JSON.stringify(otpData));
         console.log(` OTP stored: ${key} (expires in 600s)`);
 
